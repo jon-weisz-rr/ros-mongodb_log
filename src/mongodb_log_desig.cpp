@@ -31,7 +31,7 @@
 // Designator Integration
 #include <designator_integration_msgs/DesignatorRequest.h>
 #include <designator_integration_msgs/DesignatorResponse.h>
-#include <designators/Designator.h>
+#include <designator_integration_msgs/Designator.h>
 
 
 DECLARE_MONGO_CONNECTION(dbMongoDB)
@@ -56,14 +56,14 @@ enum OperationMode {
 };
 
 
-DataObject keyValuePairToBSON(designator_integration::KeyValuePair* kvpPair) {
+DataObject keyValuePairToBSON(designator_integration_msgs::KeyValuePair* kvpPair) {
   DataObjectBuilder bobBuilder;
   
-  if(kvpPair->type() == designator_integration::KeyValuePair::ValueType::STRING) {
+  if(kvpPair->type() == designator_integration_msgs::KeyValuePair::ValueType::STRING) {
     builderAppend(bobBuilder, kvpPair->key(), kvpPair->stringValue());
-  } else if(kvpPair->type() == designator_integration::KeyValuePair::ValueType::FLOAT) {
+  } else if(kvpPair->type() == designator_integration_msgs::KeyValuePair::ValueType::FLOAT) {
     builderAppend(bobBuilder, kvpPair->key(), kvpPair->floatValue());
-  } else if(kvpPair->type() == designator_integration::KeyValuePair::ValueType::POSE) {
+  } else if(kvpPair->type() == designator_integration_msgs::KeyValuePair::ValueType::POSE) {
     geometry_msgs::Pose psPose = kvpPair->poseValue();
     DataObjectBuilder bobTransform;
     builderAppend(bobTransform, "position",
@@ -76,7 +76,7 @@ DataObject keyValuePairToBSON(designator_integration::KeyValuePair* kvpPair) {
 			     << "z" << psPose.orientation.z
 			     << "w" << psPose.orientation.w));
     builderAppend(bobBuilder, kvpPair->key(), builderGetObject(bobTransform));
-  } else if(kvpPair->type() == designator_integration::KeyValuePair::ValueType::POSESTAMPED) {
+  } else if(kvpPair->type() == designator_integration_msgs::KeyValuePair::ValueType::POSESTAMPED) {
     geometry_msgs::PoseStamped psPoseStamped = kvpPair->poseStampedValue();
     BSONDate stamp = MAKE_BSON_DATE(psPoseStamped.header.stamp.sec * 1000.0 + psPoseStamped.header.stamp.nsec / 1000000.0);
     
@@ -97,11 +97,11 @@ DataObject keyValuePairToBSON(designator_integration::KeyValuePair* kvpPair) {
     			     << "w" << psPoseStamped.pose.orientation.w));
     builderAppend(bobTransformStamped, "pose", builderGetObject(bobTransform));
     builderAppend(bobBuilder, kvpPair->key(), builderGetObject(bobTransformStamped));
-  } else if(kvpPair->type() == designator_integration::KeyValuePair::ValueType::LIST) {
+  } else if(kvpPair->type() == designator_integration_msgs::KeyValuePair::ValueType::LIST) {
     DataObjectBuilder bobChildren;
-    std::list<designator_integration::KeyValuePair*> lstChildren = kvpPair->children();
+    std::list<designator_integration_msgs::KeyValuePair*> lstChildren = kvpPair->children();
     
-    for(designator_integration::KeyValuePair* kvpChild : lstChildren) {
+    for(designator_integration_msgs::KeyValuePair* kvpChild : lstChildren) {
       builderAppendElements(bobChildren, keyValuePairToBSON(kvpChild));
     }
     
@@ -112,28 +112,28 @@ DataObject keyValuePairToBSON(designator_integration::KeyValuePair* kvpPair) {
 }
 
 
-void logDesignator(designator_integration::Designator* desigLog) {
+void logDesignator(designator_integration_msgs::Designator* desigLog) {
   DataObjectBuilder bobDesig;
   std::vector<DataObject> vecChildren;
   
-  std::list<designator_integration::KeyValuePair*> lstChildren = desigLog->children();
+  std::list<designator_integration_msgs::KeyValuePair*> lstChildren = desigLog->children();
   
-  for(designator_integration::KeyValuePair* kvpChild : lstChildren) {
+  for(designator_integration_msgs::KeyValuePair* kvpChild : lstChildren) {
     builderAppendElements(bobDesig, keyValuePairToBSON(kvpChild));
   }
   
   std::string strDesigType;
   
   switch(desigLog->type()) {
-  case designator_integration::Designator::DesignatorType::ACTION:
+  case designator_integration_msgs::Designator::DesignatorType::ACTION:
     strDesigType = "action";
     break;
     
-  case designator_integration::Designator::DesignatorType::OBJECT:
+  case designator_integration_msgs::Designator::DesignatorType::OBJECT:
     strDesigType = "object";
     break;
     
-  case designator_integration::Designator::DesignatorType::LOCATION:
+  case designator_integration_msgs::Designator::DesignatorType::LOCATION:
     strDesigType = "location";
     break;
     
@@ -165,7 +165,7 @@ void cbDesignatorResponseMsg(const designator_integration_msgs::DesignatorRespon
   std::vector<designator_integration_msgs::Designator> vecDesigs = msg.designators;
   
   for(designator_integration_msgs::Designator desigmsgCurrent : vecDesigs) {
-    designator_integration::Designator* desigLog = new designator_integration::Designator(desigmsgCurrent);
+    designator_integration_msgs::Designator* desigLog = new designator_integration_msgs::Designator(desigmsgCurrent);
     logDesignator(desigLog);
     
     delete desigLog;
@@ -174,7 +174,7 @@ void cbDesignatorResponseMsg(const designator_integration_msgs::DesignatorRespon
 
 
 void cbDesignatorRequestMsg(const designator_integration_msgs::DesignatorRequest& msg) {
-  designator_integration::Designator* desigLog = new designator_integration::Designator(msg.designator);
+  designator_integration_msgs::Designator* desigLog = new designator_integration_msgs::Designator(msg.designator);
   logDesignator(desigLog);
   
   delete desigLog;
@@ -182,7 +182,7 @@ void cbDesignatorRequestMsg(const designator_integration_msgs::DesignatorRequest
 
 
 void cbDesignatorMsg(const designator_integration_msgs::Designator& msg) {
-  designator_integration::Designator* desigLog = new designator_integration::Designator(msg);
+  designator_integration_msgs::Designator* desigLog = new designator_integration_msgs::Designator(msg);
   logDesignator(desigLog);
   
   delete desigLog;
